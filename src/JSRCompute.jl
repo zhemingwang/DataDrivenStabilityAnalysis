@@ -11,12 +11,12 @@ while gammaU-gammaL > tol && iter < numIter
     model = Model(solver)
     @variable(model, P[1:dim, 1:dim] in PSDCone())
     #@variable(model, s>=0)
-    @SDconstraint(model, P >= Matrix(I,dim,dim))
+    @constraint(model, P >= Matrix(I,dim,dim),PSDCone())
     @objective(model, Min, 0)
     for i in 1:numTraj
       @constraint(model, state[:,i]'*P*state[:,i] <= gamma^(2*horizon)*state0[:,i]'*P*state0[:,i])
     end
-    @SDconstraint(model, P <= C*Matrix(I,dim,dim))
+    @constraint(model, P <= C*Matrix(I,dim,dim),PSDCone())
     JuMP.optimize!(model)
     if termination_status(model) == MOI.OPTIMAL
     #if value.(s) < 1e-10
@@ -31,14 +31,14 @@ if postprocess == true
     solver = optimizer_with_attributes(Mosek.Optimizer, MOI.Silent() => true)
     model = Model(solver)
     @variable(model, P[1:dim, 1:dim] in PSDCone())
-    @SDconstraint(model, P >= Matrix(I,dim,dim))
+    @constraint(model, P >= Matrix(I,dim,dim),PSDCone())
     # @variable(model,t >= 0)
     # @constraint(model,t >= norm(P, 2))
     @objective(model, Min, sum(P[:].^2))
     for i in 1:numTraj
       @constraint(model, state[:,i]'*P*state[:,i] <= gamma^(2*horizon)*state0[:,i]'*P*state0[:,i])
     end
-    @SDconstraint(model, P <= C*Matrix(I,dim,dim))
+    @constraint(model, P <= C*Matrix(I,dim,dim),PSDCone())
     JuMP.optimize!(model)
     return gamma, value.(P)
 else
@@ -60,7 +60,7 @@ function data_driven_lyapb_quad_unbounded(state0,state;horizon=1,ub=1e2,lb=0,tol
         model = Model(solver)
         @variable(model, P[1:dim, 1:dim] in PSDCone())
         @variable(model, s>=0)
-        @SDconstraint(model, P >= Matrix(I,dim,dim))
+        @constraint(model, P >= Matrix(I,dim,dim),PSDCone())
         @objective(model, Min, s)
         for i = 1:numTraj
           @constraint(model, state[:,i]'*P*state[:,i] <= gamma^(2*horizon)*state0[:,i]'*P*state0[:,i]+s)
@@ -78,7 +78,7 @@ function data_driven_lyapb_quad_unbounded(state0,state;horizon=1,ub=1e2,lb=0,tol
         solver = optimizer_with_attributes(CSDP.Optimizer, MOI.Silent() => true)
         model = Model(solver)
         @variable(model, P[1:dim, 1:dim] in PSDCone())
-        @SDconstraint(model, P >= Matrix(I,dim,dim))
+        @constraint(model, P >= Matrix(I,dim,dim),PSDCone())
         # @variable(model,t >= 0)
         # @constraint(model,t >= norm(P, 2))
         @objective(model, Min, sum(P[:].^2))
