@@ -102,10 +102,10 @@ function white_box_lyap_quad(A,C,obsindex,horizon,tol=1e-4)
       @variable(model, Q[1:dim, 1:dim] in PSDCone())
       @variable(model, Y[1:dimIn,1:dim])
       @variable(model, s>=0)
-      @SDconstraint(model, Q >= Matrix(I,dim,dim))
+      @constraint(model, Q >= Matrix(I,dim,dim),PSDCone())
       @objective(model, Min, s)
       for Ai in A
-          @SDconstraint(model, [gamma^2*Q+s*Matrix(I,dim,dim) Q*Ai'+(B*Y)';Ai*Q+B*Y Q+s*Matrix(I,dim,dim)] >= 0)
+          @constraint(model, [gamma^2*Q+s*Matrix(I,dim,dim) Q*Ai'+(B*Y)';Ai*Q+B*Y Q+s*Matrix(I,dim,dim)] >= 0,PSDCone())
       end
       JuMP.optimize!(model)
       if value.(s) < 1e-10
